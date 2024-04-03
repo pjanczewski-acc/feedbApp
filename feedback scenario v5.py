@@ -32,8 +32,6 @@ def generate_feedback_scenario(filtered_feedback):
                     2. area of oppurtunity (what to improve) \
                     3. key strengths to build on in future (what seems the best in the subordinate) \
                 Generate feedback scenario for employee based on received feedback:"
-
-# test
     
     for _, entry in filtered_feedback.iterrows():
         feedback.append(entry['Feedback'])
