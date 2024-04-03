@@ -34,20 +34,20 @@ def generate_feedback_scenario(filtered_feedback):
                 Generate feedback scenario for employee based on received feedback:"
     
     for _, entry in filtered_feedback.iterrows():
-        feedback.append(entry['Feedback'])
+        feedback = entry['Feedback']
 
-    messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": feedback}
-            ]
+        messages = [
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": feedback}
+                ]
 
-    response= client.chat.completions.create(
-            messages=messages,
-            model="PiotrJ_feedback",
-            temperature=0,
-            seed=445566)
-    
-    scenario = response.choices[0].message.content
+        response= client.chat.completions.create(
+                messages=messages,
+                model="PiotrJ_feedback",
+                temperature=0,
+                seed=445566)
+        
+        scenario.append(response.choices[0].message.content)
 
     return scenario
 
