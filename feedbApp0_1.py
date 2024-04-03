@@ -9,6 +9,8 @@ from os.path import exists
 from datetime import datetime, timedelta
 import pandas as pd
 import streamlit as st
+import json
+import openai
 
 # Load configuration from JSON file
 with open("C:/Users/piotr.janczewski/Desktop/genAI/Test/config.json", mode="r") as f:
@@ -29,27 +31,6 @@ st.set_page_config(page_title="Feedback App",
 # Functions
 ##############
 
-def app_sec():
-    #########
-    # SIDEBAR #
-    #########
-    authorized_pple = ["tomasz.mostowski", "dominik.perykasza",
-                       "piotr.janczewski", "aailead"]
-    mot2pass = "JestesmyW0ln!"
-    col1, mid, col2 = st.sidebar.columns([1, 4, 1])
-    # mid.image(folder + "/CVapp/images/accenture_logo.png", width=200)
-    username = st.sidebar.text_input("Login")
-    pwd = st.sidebar.text_input("password", type='password')
-    
-    username = 'aailead'; pwd ='JestesmyW0ln!' # For tests only
-    
-    if (username.lower() in authorized_pple) and (pwd == mot2pass):
-        st.sidebar.success("Authorized")
-        # if exists(Sel_txt): os.remove(Sel_txt)
-        main_page()
-    else:
-        st.sidebar.error("Please enter valid credentials!")
-
 # Function to filter feedback based on time
 def filter_feedback(feedback_table, months_back_val):
     delta = timedelta(days=months_back_val * 30)
@@ -57,10 +38,16 @@ def filter_feedback(feedback_table, months_back_val):
     filtered_feedback = feedback_table[feedback_table['Date'] >= threshold_date]
     return filtered_feedback
 
+def list_to_csv(data):
+    csv_string = ''
+    for item in data:
+        csv_string += "\n".join(map(str, item)) + "\n"
+    return csv_string
+
 # Function to generate feedback scenario using Language Model
 def generate_feedback_scenario(filtered_feedback):
+
     scenario = []
-    feedback = []
 
     prompt = "You are a thoughtful manager. Based on several pieces of individual feedback, \
                 you want to draft a scenario of feedback summary for your subordinate. \
@@ -91,18 +78,22 @@ def generate_feedback_scenario(filtered_feedback):
 
 def main_page():
 
+    output = ''
+
     st.markdown("<p style='text-align:Left;font-family:Arial;" +
             "font-weight:bold;color:hsl(0, 100%, 0%); font-size:14px;'>" +
             "Input individual feedbacks to produce discussion scenario</p>",
             unsafe_allow_html=True)
 
     st.write("")
-    st.write("")
-
-    # Add a file uploader widget
-    uploaded_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
 
     with st.form("Feedback summary", clear_on_submit=False):
+
+        subordinate_name = st.text_input("Counselee 1st name", value="Ramon")
+        subordinate_surname = st.text_input("Counselee surname", value="Puls")
+
+        # Add a file uploader widget
+        uploaded_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
 
         months_back_val = st.slider("How old feedback to include: 0=latest, 24=Up to 2Y",
                               min_value=0, max_value=24, value=12)
@@ -113,29 +104,28 @@ def main_page():
         produce = st.form_submit_button("Produce feedback scenario")
 
         if produce:
-            subordinate_name = "Ramon"
-            subordinate_surname = "Puls"
-
+            
             # Read feedback table from Excel file
             if uploaded_file is not None:
                 # Read the Excel file into a pandas DataFrame
                 feedback_table = pd.read_excel(uploaded_file, parse_dates=['Date'], skiprows=1)
-                path_in = uploaded_file.name
 
             # Filter feedback
             filtered_feedback = filter_feedback(feedback_table, months_back_val)
 
             # Generate feedback scenario
             scenario = generate_feedback_scenario(filtered_feedback)
+            st.write("")
+            st.write(scenario)
+            st.write("")
 
-            # Save feedback scenario to a text file
-            output_file_name = f"{subordinate_name} {subordinate_surname} - feedback scenario script.txt"
-            output_file_path = path_in.rsplit("/", 1)[0] + "/" + output_file_name
-            with open(output_file_path, "w") as file:
-                for item in scenario:
-                    file.write(item + "\n")
 
-            print(f"Feedback scenario saved to: {output_file_path}")
+
+    # Save feedback scenario to a text file
+    if produce:
+        output = str(scenario).replace('\\n', '\n').replace('\\t', '\t')
+        output_file_name = f"{subordinate_name} {subordinate_surname} - feedback scenario script.txt"
+        st.download_button('Download feedback scenario', data = output, file_name=output_file_name, mime='text/csv')
 
     st.write("https://www.youtube.com/watch?v=WNnzw90vxrE of this form")
 
@@ -143,7 +133,6 @@ def main_page():
 ##############
 # PAGE SET UP
 ##############
-
 
 hide_streamlit_style = """
             <style>
@@ -154,4 +143,3 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 main_page()
-# app_sec()
