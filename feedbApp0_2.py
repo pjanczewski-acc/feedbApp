@@ -38,47 +38,29 @@ def filter_feedback(feedback_table, months_back_val):
     filtered_feedback = feedback_table[feedback_table['Date'] >= threshold_date]
     return filtered_feedback
 
-def list_to_csv(data):
-    csv_string = ''
-    for item in data:
-        csv_string += "\n".join(map(str, item)) + "\n"
-    return csv_string
-
 # Function to generate feedback scenario using Language Model
 def generate_feedback_scenario(filtered_feedback):
 
     scenario = []
-
-    prompt = "You are a thoughtful manager. Based on several pieces of individual feedback, \
-                you want to draft a scenario of feedback summary for your subordinate. \
-                The scenario should be composed in bullet points, max 2500 characters, \
-                and contain three main sections: \
-                    1. positive achievements (what went well), \
-                    2. area of oppurtunity (what to improve) \
-                    3. key strengths to build on in future (what seems the best in the subordinate) \
-                For some pieces of individual feedback, some of the sections 1-3 might be empty. \
-                If the entire feedback piece is super positive, then point 2 will be left blank. \
-                If the entire feedback piece is super negative, then point 1 will be left blank, \
-                but in that case still try to derive a single encouraging phrase for the subordinate. \
-                Generate feedback scenario for employee based on received feedback:"
+    feedback = ''
     
-    # Initialize lists to store individual feedback
-
+    prompt = prompt_feed
+    
     for _, entry in filtered_feedback.iterrows():
-        feedback = entry['Feedback']
+        feedback += entry['Feedback']
 
-        messages = [
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": feedback}
-                ]
+    messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": feedback}
+            ]
 
-        response= client.chat.completions.create(
-                messages=messages,
-                model="PiotrJ_feedback",
-                temperature=0,
-                seed=445566)
+    response= client.chat.completions.create(
+            messages=messages,
+            model="PiotrJ_feedback",
+            temperature=0,
+            seed=445566)
     
-        scenario.append(response.choices[0].message.content)
+    scenario= response.choices[0].message.content
 
     return scenario
 
@@ -86,17 +68,29 @@ def main_page():
 
     output = ''
 
-    st.markdown("<p style='text-align:Left;font-family:Arial;" +
-            "font-weight:bold;color:hsl(0, 100%, 0%); font-size:14px;'>" +
-            "Input individual feedbacks to produce discussion scenario</p>",
-            unsafe_allow_html=True)
+    st.write("Input individual feedbacks to produce discussion scenario")
 
     st.write("")
 
     with st.form("Feedback summary", clear_on_submit=False):
 
-        subordinate_name = st.text_input("Counselee 1st name", value="Ramon")
-        subordinate_surname = st.text_input("Counselee surname", value="Puls")
+        prompt_value = ''
+        prompt_vals = ['You are a thoughtful manager.',
+                        'Based on several pieces of individual feedback, you want to draft a scenario of feedback summary for your subordinate.',
+                        'The scenario should be composed in bullet points, max 2500 characters, and contain three main sections:',
+                        '    1. positive achievements (what went well)',
+                        '    2. area of oppurtunity (what to improve)',
+                        '    3. key strengths to build on in future (what seems the best in the subordinate)',
+                        'Generate feedback scenario for employee based on received feedback']
+
+        for chunk in prompt_vals:
+            prompt_value += chunk + '\n'
+
+        with st.expander("Your prompt"):
+            prompt_feed = st.text_area("Edit if adequate", value = prompt_value)
+        
+        subordinate_name = st.text_input("Counselee 1st name", value="")
+        subordinate_surname = st.text_input("Counselee surname", value="")
 
         # Add a file uploader widget
         uploaded_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
