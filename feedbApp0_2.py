@@ -99,6 +99,7 @@ def main_page():
             st.write("Log in to Workday, in the 'Feedback Received' section click on 'Export to Excel' in top right corner")
             st.write("")
             st.image('export.png', caption='example')
+            
         months_back_val = st.slider("How old feedback to include: 0=latest, 24=Up to 2Y",
                               min_value=0, max_value=24, value=12)
         st.write("")
