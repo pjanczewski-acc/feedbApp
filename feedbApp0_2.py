@@ -39,7 +39,7 @@ def filter_feedback(feedback_table, months_back_val):
     return filtered_feedback
 
 # Function to generate feedback scenario using Language Model
-def generate_feedback_scenario(filtered_feedback):
+def generate_feedback_scenario(filtered_feedback, prompt_feed):
 
     scenario = []
     feedback = ''
@@ -95,6 +95,11 @@ def main_page():
         # Add a file uploader widget
         uploaded_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
 
+        with st.expander("Where to get the file from?"):
+            st.write("Log in to Workday, in the 'Feedback Received' section click on 'Export to Excel' in top right corner")
+            st.write("")
+            st.image('export.png', caption='example')
+            
         months_back_val = st.slider("How old feedback to include: 0=latest, 24=Up to 2Y",
                               min_value=0, max_value=24, value=12)
         st.write("")
@@ -114,7 +119,7 @@ def main_page():
             filtered_feedback = filter_feedback(feedback_table, months_back_val)
 
             # Generate feedback scenario
-            scenario = generate_feedback_scenario(filtered_feedback)
+            scenario = generate_feedback_scenario(filtered_feedback, prompt_feed)
             st.write("")
             st.write(scenario)
             st.write("")
