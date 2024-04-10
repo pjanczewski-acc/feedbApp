@@ -79,7 +79,7 @@ def main_page():
                         'Based on several pieces of individual feedback, you want to draft a scenario of feedback summary for your subordinate.',
                         'The scenario should be composed in bullet points, max 2500 characters, and contain three main sections:',
                         '    1. positive achievements (what went well)',
-                        '    2. area of oppurtunity (what to improve)',
+                        '    2. area of opportunity (what to improve)',
                         '    3. key strengths to build on in future (what seems the best in the subordinate)',
                         'Generate feedback scenario for employee based on received feedback']
 
