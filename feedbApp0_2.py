@@ -74,32 +74,46 @@ def main_page():
 
     with st.form("Feedback summary", clear_on_submit=False):
 
-        prompt_value = ''
-        prompt_vals = ['You are a thoughtful manager.',
-                        'Based on several pieces of individual feedback, you want to draft a scenario of feedback summary for your subordinate.',
-                        'The scenario should be composed in bullet points, max 2500 characters, and contain three main sections:',
-                        '    1. positive achievements (what went well)',
-                        '    2. area of opportunity (what to improve)',
-                        '    3. key strengths to build on in future (what seems the best in the subordinate)',
-                        'Generate feedback scenario for employee based on received feedback']
+        gen_prompt = "You are a thoughtful manager." + \
+            "Based on several pieces of individual feedback " + \
+            "you want to draft a scenario of feedback summary for your subordinate." + \
+            "The scenario should be composed in bullet points, " + \
+            "max 2500 characters, and contain three main sections: " + \
+            "    1. positive achievements (what went well)" + \
+            "    2. area of opportunity (what to improve)" + \
+            "    3. key strengths to build on in future (what seems the best in the subordinate)." + \
+            "Generate feedback scenario for employee based on received feedback"
 
-        for chunk in prompt_vals:
-            prompt_value += chunk + '\n'
-
-        with st.expander("Your prompt"):
-            prompt_feed = st.text_area("Edit if adequate", value = prompt_value)
-        
-        subordinate_name = st.text_input("Counselee 1st name", value="")
-        subordinate_surname = st.text_input("Counselee surname", value="")
+        Clf_prompt = "Additionally, incorporate in the final feedback " + \
+                    "CliftonStrength profile of the subordinate" + \
+                    "Remember to interpret stregnth definition and focus on top 15 ranks " + \
+                    "as per Gallup CliftonStrength framework." + \
+                    "Consider interactions between different strengths." + \
+                    "For positive achievements and key strengths, " + \
+                    "indicate (if adequate) relevant talents and their interactions." + \
+                    "For example: 'your success here probably results from your Clifton strength in ...'." + \
+                    "For area of opportinity, check and report if any of 5-10 Strngths " + \
+                    "can be used to overcome the difficulty. " + \
+                    "If none of top 10 strengths seems applicable for given problem, " + \
+                    "provide recommendation of Strengths to look among colleagues vto be paired with." + \
+                    "For example: 'Your Harmony and Consistency would work great if you are paired a person strong in Command." + \
+                    "Here are the CliftonStrengths ranks of the subordinate to incorporate in the feedback."
 
         # Add a file uploader widget
-        uploaded_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
+        feedback_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
+        Clifton_file = st.file_uploader("Upload Clifton ranks", type=["txt", "csv"])
 
-        with st.expander("Where to get the file from?"):
-            st.write("Log in to Workday, in the 'Feedback Received' section click on 'Export to Excel' in top right corner")
-            st.write("")
-            st.image('export.png', caption='example')
-            
+        # Fetch subordinates initials
+        col1, col2 = st.columns(2)
+        with col1:
+            subordinate_name_initial = st.text_input("Counselee 1st name initial", value="")
+        with col2:
+            subordinate_surname_initial = st.text_input("Counselee surname initial", value="")
+
+        with st.expander("Your prompt"):
+            gen_prompt_feed = st.text_area("Main part (obligatory), edit if adequate", value = gen_prompt)
+            Clf_prompt_feed = st.text_area("Clifton part (optional), edit if adequate", value = Clf_prompt)
+
         months_back_val = st.slider("How old feedback to include: 0=latest, 24=Up to 2Y",
                               min_value=0, max_value=24, value=12)
         st.write("")
@@ -111,9 +125,17 @@ def main_page():
         if produce:
             
             # Read feedback table from Excel file
-            if uploaded_file is not None:
+            if feedback_file is not None:
                 # Read the Excel file into a pandas DataFrame
-                feedback_table = pd.read_excel(uploaded_file, parse_dates=['Date'], skiprows=1)
+                feedback_table = pd.read_excel(feedback_file, parse_dates=['Date'], skiprows=1)
+                prompt_feed = gen_prompt_feed
+
+            # Read Clifton ranks from text file
+            if Clifton_file is not None:
+                # Read the Excel file into a pandas DataFrame
+                Clifton_table = pd.read_csv(Clifton_file, header=None)
+                Clf_prompt_feed += Clifton_table.iloc[:,0].to_string(index=False).replace('\n', '')
+                prompt_feed += Clf_prompt_feed
 
             # Filter feedback
             filtered_feedback = filter_feedback(feedback_table, months_back_val)
@@ -124,12 +146,20 @@ def main_page():
             st.write(scenario)
             st.write("")
 
-
+    with st.expander("Where to get the input files from?"):
+        st.write("For the feedback file, log in to Workday," + 
+                    "in the 'Feedback Received' section click on" +
+                    "'Export to Excel' in top right corner")
+        st.image('export.png', caption='example')
+        st.write("")
+        st.write("For CliftonStrengths, create csv, txt or xls file with the list from 1 to 34")
+        example = open('example_Clifton.txt', 'r').read()
+        st.download_button("Download Example Clifton File", data = example, file_name='example_Clifton.txt', mime='text/csv')
 
     # Save feedback scenario to a text file
     if produce:
         output = str(scenario).replace('\\n', '\n').replace('\\t', '\t')
-        output_file_name = f"{subordinate_name} {subordinate_surname} - feedback scenario script.txt"
+        output_file_name = f"{subordinate_name_initial} {subordinate_surname_initial} - feedback scenario script.txt"
         st.download_button('Download feedback scenario', data = output, file_name=output_file_name, mime='text/csv')
 
     st.write("https://www.youtube.com/watch?v=WNnzw90vxrE of this form")
@@ -148,3 +178,4 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 main_page()
+
