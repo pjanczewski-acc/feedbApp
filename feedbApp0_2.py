@@ -11,7 +11,6 @@ import pandas as pd
 import streamlit as st
 import json
 import openai
-from PIL import Image
 
 # Load configuration from JSON file
 with open("config.json", mode="r") as f:
@@ -23,7 +22,6 @@ client = openai.AzureOpenAI(
         api_version="2023-12-01-preview")
 
 st.set_page_config(page_title="Feedback App",
-                   # page_icon=folder + "/CVapp/images/favicon_accenture.png",
                    layout="wide",
                    initial_sidebar_state="expanded"
                    )
@@ -69,23 +67,15 @@ def main_page():
 
     output = ''
 
-    # Load the images
-    clifton_image = Image.open("clifton.png")
-    persons_image = Image.open("feedback.png")
-
-    # # Resize the images to fit in the header
-    # clifton_image = clifton_image.resize((750, 77))
-    # persons_image = persons_image.resize((750, 77))
-
     # Display the images in the header next to each other
-    st.image(persons_image)
+    st.image("images/feedback.png")
 
     col1, col2 = st.columns(2)
     with col1:
         st.write('')
         st.write("Input individual feedbacks to produce discussion scenario")
     with col2:
-        st.image(clifton_image)
+        st.image("images/clifton.png")
 
     with st.form("Feedback summary", clear_on_submit=False):
 
@@ -185,7 +175,7 @@ def main_page():
         st.write("For the feedback file, log in to Workday," + 
                     "in the 'Feedback Received' section click on" +
                     "'Export to Excel' in top right corner")
-        st.image('export.png', caption='example')
+        st.image('images/export.png', caption='example')
         st.write("")
         st.write("For CliftonStrengths, create csv, txt or xls file with the list from 1 to 5, 10, 15 or all 34")
         example = open('example_Clifton.txt', 'r').read()
