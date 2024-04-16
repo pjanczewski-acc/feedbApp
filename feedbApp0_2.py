@@ -151,7 +151,6 @@ def main_page():
                 # Read the Excel file into a pandas DataFrame
                 Clifton_junior_table = pd.read_csv(Clifton_junior_file, header=None)
                 Clj_prompt_feed += Clifton_junior_table.iloc[:,0].to_string(index=False).replace('\n', '')
-                print(Clj_prompt_feed)
                 prompt_feed += Clj_prompt_feed
 
             # Read Clifton ranks from text file
@@ -159,7 +158,6 @@ def main_page():
                 # Read the Excel file into a pandas DataFrame
                 Clifton_senior_table = pd.read_csv(Clifton_senior_file, header=None)
                 Cls_prompt_feed += Clifton_senior_table.iloc[:,0].to_string(index=False).replace('\n', '')
-                print(Cls_prompt_feed)
                 prompt_feed += Cls_prompt_feed
 
             # Filter feedback
