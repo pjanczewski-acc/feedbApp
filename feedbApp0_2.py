@@ -4,8 +4,6 @@ Created on Wed Apr 3 12:12:00 2024
 @author: piotr.janczewski
 """
 
-import os
-from os.path import exists
 from datetime import datetime, timedelta
 import pandas as pd
 import streamlit as st
