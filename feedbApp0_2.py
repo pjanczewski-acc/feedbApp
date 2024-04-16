@@ -11,6 +11,7 @@ import pandas as pd
 import streamlit as st
 import json
 import openai
+from PIL import Image
 
 # Load configuration from JSON file
 with open("config.json", mode="r") as f:
@@ -68,9 +69,23 @@ def main_page():
 
     output = ''
 
-    st.write("Input individual feedbacks to produce discussion scenario")
+    # Load the images
+    clifton_image = Image.open("clifton.png")
+    persons_image = Image.open("feedback.png")
 
-    st.write("")
+    # # Resize the images to fit in the header
+    # clifton_image = clifton_image.resize((750, 77))
+    # persons_image = persons_image.resize((750, 77))
+
+    # Display the images in the header next to each other
+    st.image(persons_image)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write('')
+        st.write("Input individual feedbacks to produce discussion scenario")
+    with col2:
+        st.image(clifton_image)
 
     with st.form("Feedback summary", clear_on_submit=False):
 
@@ -84,7 +99,7 @@ def main_page():
             "    3. key strengths to build on in future (what seems the best in the subordinate)." + \
             "Generate feedback scenario for employee based on received feedback"
 
-        Clf_prompt = "Additionally, incorporate in the final feedback " + \
+        Clj_prompt = "Additionally, incorporate in the final feedback " + \
                     "CliftonStrength profile of the subordinate" + \
                     "Remember to interpret stregnth definition and focus on top 15 ranks " + \
                     "as per Gallup CliftonStrength framework." + \
@@ -99,20 +114,31 @@ def main_page():
                     "For example: 'Your Harmony and Consistency would work great if you are paired a person strong in Command." + \
                     "Here are the CliftonStrengths ranks of the subordinate to incorporate in the feedback."
 
+        Cls_prompt = "Also, incorporate in the final feedback " + \
+                    "my CliftonStrength profile" + \
+                    "so that I know which my strengths to guide my junior with" + \
+                    "to help hium/her strengthen his/her strengths " + \
+                    "and overcome difficulties (if any)." + \
+                    "Consider especially those strenghts of mine which " + \
+                    "are described to pair well with subordinate's strengths." + \
+                    "Do not list back all my strengths. Just those relevant for the feedback." + \
+                    "Here are my CliftonStrengths ranks."
+        
         # Add a file uploader widget
         feedback_file = st.file_uploader("Upload Excel file with individual feedbacks from WD", type=["xls", "xlsx"])
-        Clifton_file = st.file_uploader("Upload Clifton ranks", type=["txt", "csv"])
 
-        # Fetch subordinates initials
         col1, col2 = st.columns(2)
         with col1:
-            subordinate_name_initial = st.text_input("Counselee 1st name initial", value="")
+            Clifton_junior_file = st.file_uploader("Upload JUNIOR's Clifton ranks", type=["txt", "csv"])
+            subordinate_name_initial = st.text_input("Counselee name", value="")
         with col2:
-            subordinate_surname_initial = st.text_input("Counselee surname initial", value="")
+            Clifton_senior_file = st.file_uploader("Upload YOUR Clifton ranks", type=["txt", "csv"])
+            subordinate_surname_initial = st.text_input("Counselee surname", value="")
 
         with st.expander("Your prompt"):
             gen_prompt_feed = st.text_area("Main part (obligatory), edit if adequate", value = gen_prompt)
-            Clf_prompt_feed = st.text_area("Clifton part (optional), edit if adequate", value = Clf_prompt)
+            Clj_prompt_feed = st.text_area("Clifton junior part (optional), edit if adequate", value = Clj_prompt)
+            Cls_prompt_feed = st.text_area("Clifton senior part (optional), edit if adequate", value = Cls_prompt)
 
         months_back_val = st.slider("How old feedback to include: 0=latest, 24=Up to 2Y",
                               min_value=0, max_value=24, value=12)
@@ -131,11 +157,20 @@ def main_page():
                 prompt_feed = gen_prompt_feed
 
             # Read Clifton ranks from text file
-            if Clifton_file is not None:
+            if Clifton_junior_file is not None:
                 # Read the Excel file into a pandas DataFrame
-                Clifton_table = pd.read_csv(Clifton_file, header=None)
-                Clf_prompt_feed += Clifton_table.iloc[:,0].to_string(index=False).replace('\n', '')
-                prompt_feed += Clf_prompt_feed
+                Clifton_junior_table = pd.read_csv(Clifton_junior_file, header=None)
+                Clj_prompt_feed += Clifton_junior_table.iloc[:,0].to_string(index=False).replace('\n', '')
+                print(Clj_prompt_feed)
+                prompt_feed += Clj_prompt_feed
+
+            # Read Clifton ranks from text file
+            if Clifton_senior_file is not None:
+                # Read the Excel file into a pandas DataFrame
+                Clifton_senior_table = pd.read_csv(Clifton_senior_file, header=None)
+                Cls_prompt_feed += Clifton_senior_table.iloc[:,0].to_string(index=False).replace('\n', '')
+                print(Cls_prompt_feed)
+                prompt_feed += Cls_prompt_feed
 
             # Filter feedback
             filtered_feedback = filter_feedback(feedback_table, months_back_val)
@@ -152,7 +187,7 @@ def main_page():
                     "'Export to Excel' in top right corner")
         st.image('export.png', caption='example')
         st.write("")
-        st.write("For CliftonStrengths, create csv, txt or xls file with the list from 1 to 34")
+        st.write("For CliftonStrengths, create csv, txt or xls file with the list from 1 to 5, 10, 15 or all 34")
         example = open('example_Clifton.txt', 'r').read()
         st.download_button("Download Example Clifton File", data = example, file_name='example_Clifton.txt', mime='text/csv')
 
