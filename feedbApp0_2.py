@@ -73,7 +73,7 @@ def main_page():
         st.write('')
         st.write("Input individual feedbacks to produce discussion scenario")
     with col2:
-        st.image("images/clifton.png")
+        st.image("images/Clifton.png")
 
     with st.form("Feedback summary", clear_on_submit=False):
 
